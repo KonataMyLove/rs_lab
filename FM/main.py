@@ -49,6 +49,7 @@ def main():
     iter_num = train_len // bsz
 
     with tf.Session() as sess:
+        # 定义计算图
         input_ph, labels_ph, loss = FM(input_dim)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
         train_op = optimizer.minimize(loss)
@@ -56,13 +57,15 @@ def main():
         for epoch in tqdm(range(epochs)):
             for iter in range(iter_num + 1):
                 # TODO:如果行数不够，就减少bsz或填充0
-                feats = x_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
-                labels = y_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
+                if iter == iter_num:
+                    feats = x_trn.iloc[iter * bsz: ].to_numpy()
+                    labels = y_trn.iloc[iter * bsz: ].to_numpy()
+                else:
+                    feats = x_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
+                    labels = y_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
                 labels = np.expand_dims(labels, axis=1).astype(np.float32)
                 sess.run(train_op, feed_dict={input_ph: feats, labels_ph: labels})
 
-                break
-            break
 
 if __name__ == '__main__':
     main()
