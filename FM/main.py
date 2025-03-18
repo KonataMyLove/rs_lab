@@ -44,19 +44,24 @@ def main():
 
     # 按批次读入数据
     bsz = 32
-    epochs = 10
+    epochs = 100
     train_len, test_len = x_trn.shape[0], x_tst.shape[0]
     iter_num = train_len // bsz
 
     with tf.Session() as sess:
         # 定义计算图
-        input_ph, labels_ph, loss = FM(input_dim)
+        input_ph, labels_ph, loss, Pre, Rec = FM(input_dim)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
         train_op = optimizer.minimize(loss)
+        # tf.summary.scalar('Precision', Pre)
+        # summ = tf.summary.merge_all()
         sess.run(tf.global_variables_initializer())
+        # tb
+        # tb_path = './tensorboard/test1/'
+        # writer = tf.summary.FileWriter(tb_path, sess.graph)
+        
         for epoch in tqdm(range(epochs)):
             for iter in range(iter_num + 1):
-                # TODO:如果行数不够，就减少bsz或填充0
                 if iter == iter_num:
                     feats = x_trn.iloc[iter * bsz: ].to_numpy()
                     labels = y_trn.iloc[iter * bsz: ].to_numpy()
@@ -64,8 +69,14 @@ def main():
                     feats = x_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
                     labels = y_trn.iloc[iter * bsz: (iter + 1) * bsz].to_numpy()
                 labels = np.expand_dims(labels, axis=1).astype(np.float32)
-                sess.run(train_op, feed_dict={input_ph: feats, labels_ph: labels})
-
+                sess.run([train_op], feed_dict={input_ph: feats, labels_ph: labels})
+            # eval
+            # 此处传入测试集全部样本并计算metric
+            feats = x_tst.iloc[: ].to_numpy()
+            labels = y_tst.iloc[: ].to_numpy()
+            labels = np.expand_dims(labels, axis=1).astype(np.float32)
+            sess.run([Pre, Rec], feed_dict={input_ph: feats, labels_ph: labels})
+            
 
 if __name__ == '__main__':
     main()
