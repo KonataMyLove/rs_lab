@@ -53,12 +53,14 @@ def main():
         input_ph, labels_ph, loss, Pre, Rec = FM(input_dim)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
         train_op = optimizer.minimize(loss)
-        # tf.summary.scalar('Precision', Pre)
-        # summ = tf.summary.merge_all()
+        tf.summary.scalar('Loss', loss)
+        tf.summary.scalar('Precision', Pre)
+        tf.summary.scalar('Recall', Rec)
+        summ = tf.summary.merge_all()
         sess.run(tf.global_variables_initializer())
         # tb
-        # tb_path = './tensorboard/test1/'
-        # writer = tf.summary.FileWriter(tb_path, sess.graph)
+        tb_path = './tensorboard/test2/'
+        writer = tf.summary.FileWriter(tb_path, sess.graph)
         
         for epoch in tqdm(range(epochs)):
             for iter in range(iter_num + 1):
@@ -75,7 +77,9 @@ def main():
             feats = x_tst.iloc[: ].to_numpy()
             labels = y_tst.iloc[: ].to_numpy()
             labels = np.expand_dims(labels, axis=1).astype(np.float32)
-            sess.run([Pre, Rec], feed_dict={input_ph: feats, labels_ph: labels})
+            # 要获得tensorboard可视化，需要fetch merge过后的summary
+            summary, _, _ = sess.run([summ, Pre, Rec], feed_dict={input_ph: feats, labels_ph: labels})
+            writer.add_summary(summary, epoch)
             
 
 if __name__ == '__main__':
